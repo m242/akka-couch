@@ -8,3 +8,4 @@
 
 * [Ektorp](http://www.ektorp.org/)
 * [Akka 2.0](http://akka.io/)
+* [SLF4S](https://github.com/weiglewilczek/slf4s)
