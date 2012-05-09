@@ -17,33 +17,71 @@ package net.markbeeson.akkacouch
 
 import org.ektorp.http.StdHttpClient
 import org.ektorp.impl.StdCouchDbInstance
+import java.io.InputStream
+import org.ektorp.{UpdateConflictException, DocumentNotFoundException, ViewQuery}
+import com.typesafe.config._
 
 trait CouchDB {
-  val URL = "http://localhost:5984/"
-  val DB = "myCouchDb"
 
-  val db = {
+  lazy val conf = ConfigFactory.load()
+
+  lazy val URL: String = try {
+    conf.getString("akka-couch.host")
+  } catch {
+    case e: ConfigException.Missing => {
+      println("Missing setting: akka-couch.host")
+      throw e
+      ""
+    }
+  }
+
+  lazy val DB: String = try {
+    conf.getString("akka-couch.db")
+  } catch {
+    case e: ConfigException.Missing => {
+      println("Missing setting: akka-couch.db")
+      throw e
+      ""
+    }
+  }
+
+  lazy val db = {
     val httpClient = new StdHttpClient.Builder().url(URL).build()
     new StdCouchDbInstance(httpClient).createConnector(DB, true)
   }
 
-  def get(T:Class[_], id:String):Option[Any] = {
-    try {
-      Some(db.get(T, id))
+  def create(obj: AnyRef): AnyRef = {
+    db create obj
+    obj
+  }
+
+  def read(id: String): Option[InputStream] = {
+    try{
+      Option(db getAsStream id)
     } catch {
-      case e => None
+      case e: DocumentNotFoundException => None
     }
   }
 
-  def create(obj:AnyRef) {
-    db create obj
-  }
-
-  def update(obj:AnyRef) {
+  def update(obj: AnyRef) {
     db update obj
   }
 
-  def delete(obj:AnyRef) {
-    db delete obj
+  def delete(obj: AnyRef) {
+    try{
+//      println("Deleting: "+AppUtils.toJson(obj))
+      db delete obj
+    } catch {
+      case e: UpdateConflictException => {} //probably a 409 error, no _rev field
+    }
   }
+
+  def query(design: String, view: String, key: Option[String]): List[String] = {
+    import scala.collection.JavaConversions._
+    val query = new ViewQuery().designDocId("_design/" + design).viewName(view)
+    key.foreach(k => query.key(k))
+    val r = db.queryView(query).getRows
+    r.map(_.getValue).toList
+  }
+
 }

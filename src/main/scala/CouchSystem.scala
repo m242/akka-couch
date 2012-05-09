@@ -24,3 +24,10 @@ object CouchSystem {
   val couchSupervisor = CouchSystem.system.actorOf(Props[CouchSupervisor]
     .withDispatcher(DISPATCHER), "couchSupervisor")
 }
+
+case class Create(obj: AnyRef)
+case class Read(id: String)
+case class Update(obj: AnyRef)
+case class Delete(obj: AnyRef)
+case class Query(design: String, view: String, key: Option[String])
+

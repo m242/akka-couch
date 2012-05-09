@@ -30,24 +30,44 @@ class CouchActor extends Actor with Logging with CouchDB {
     // may vary. The important part is to not intercept exceptions, and let them
     // bubble up to the supervisor.
 
-    case ("get", c:Class[Any], key:String) => {
-      logger debug "Received get message"
-      sender ! get(c, key)
+    case Create(obj: AnyRef) => {
+      try{
+        logger debug "Received create message"
+        sender ! create(obj)
+      } catch {
+        case e: Exception => sender ! akka.actor.Status.Failure(e)
+        throw e
+      }
     }
 
-    case ("create", obj:AnyRef) => {
-      logger debug "Received create message"
-      create(obj)
+    case Read(id: String) => {
+      try{
+        logger debug "Received get message"
+        sender ! read(id)
+      } catch {
+        case e:Exception => sender ! akka.actor.Status.Failure(e)
+        throw e
+      }
     }
 
-    case ("update", obj:AnyRef) => {
+    case Update(obj: AnyRef) => {
       logger debug "Received update message"
       update(obj)
     }
 
-    case ("delete", obj:AnyRef) => {
+    case Delete(obj: AnyRef) => {
       logger debug "Received delete message"
       delete(obj)
+    }
+
+    case Query(design: String, view: String, key: Option[_]) => {
+      try{
+        logger debug "Received query message"
+        sender ! query(design, view, key)
+      } catch {
+        case e: Exception => sender ! akka.actor.Status.Failure(e)
+        throw e
+      }
     }
 
     // Add any other messages you see fit here. Compaction, multi-get, etc.
