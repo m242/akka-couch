@@ -40,7 +40,7 @@ trait AkkaCouchClient {
   }
 
   def createAtomic[T <: AnyRef](obj: T): T = {
-    Await.result(CouchSystem.couchSupervisor ? Create(obj), dur).asInstanceOf[AnyRef]
+    Await.result(CouchSystem.couchSupervisor ? Create(obj), dur).asInstanceOf[T]
   }
 }
 
