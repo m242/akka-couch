@@ -23,22 +23,22 @@ import akka.routing.RoundRobinRouter
 import akka.actor.SupervisorStrategy.{Restart, Stop}
 
 class CouchSupervisor extends Actor with Logging {
-  var couchActor:Option[ActorRef] = None
+  var couchActor: Option[ActorRef] = None
 
   // Try to restart the actor 3 times within a minute, otherwise stop it.
   override val supervisorStrategy = OneForOneStrategy(maxNrOfRetries = 3,
     withinTimeRange = 1 minute) {
 
-    case aie:ActorInitializationException => {
-      logger.debug("Exception starting CouchActor: "+aie.toString)
+    case aie: ActorInitializationException => {
+      logger.debug("Exception starting CouchActor: " + aie.toString)
       Stop
     }
-    case dbe:DbAccessException => {
-      logger.debug("Exception connecting CouchActor: "+dbe.toString)
+    case dbe: DbAccessException => {
+      logger.debug("Exception connecting CouchActor: " + dbe.toString)
       Stop
     }
-    case e => {
-      logger.debug("Exception in CouchActor: "+e.toString)
+    case e: Exception => {
+      logger.debug("Exception in CouchActor: " + e.toString)
       Restart
     }
   }
