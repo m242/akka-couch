@@ -50,7 +50,7 @@ class CouchSupervisor extends Actor with Logging {
 
   override def postStop() {
     logger warn "Stopping CouchSupervisor"
-    couchActor.get ! "Attack ships on fire off the shoulder of Orion."
+    couchActor.foreach(_ ! "Attack ships on fire off the shoulder of Orion." )
     // TYRELL: The light that burns twice as bright burns for half as long -
     //         and you have burned so very, very brightly, Roy.
   }
