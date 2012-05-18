@@ -38,8 +38,8 @@ trait AkkaCouchClient {
     CouchSystem.couchSupervisor ! Create(obj)
   }
 
-  def read(id: String): Option[InputStream] = {
-    Await.result(CouchSystem.couchSupervisor ? Read(id), dur).asInstanceOf[Option[InputStream]]
+  def read(id: String): Option[String] = {
+    Await.result(CouchSystem.couchSupervisor ? Read(id), dur).asInstanceOf[Option[String]]
   }
 
   def update(obj: AnyRef) {
@@ -54,8 +54,8 @@ trait AkkaCouchClient {
     Await.result(CouchSystem.couchSupervisor ? Query(design, view, key), dur).asInstanceOf[List[String]]
   }
 
-  def createAtomic(obj: AnyRef) = {
-    Await.result(CouchSystem.couchSupervisor ? Create(obj), dur).asInstanceOf[AnyRef]
+  def createAtomic[T <: AnyRef](obj: T): T = {
+    Await.result(CouchSystem.couchSupervisor ? Create(obj), dur).asInstanceOf[T]
   }
 }
 
