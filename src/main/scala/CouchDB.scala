@@ -17,9 +17,12 @@ package net.markbeeson.akkacouch
 
 import org.ektorp.http.StdHttpClient
 import org.ektorp.impl.StdCouchDbInstance
-import java.io.InputStream
 import org.ektorp.{UpdateConflictException, DocumentNotFoundException, ViewQuery}
 import com.typesafe.config._
+import org.ektorp.support.CouchDbDocument
+import org.codehaus.jackson.map.ObjectMapper
+import org.codehaus.jackson.JsonNode
+import akka.japi.Option.Some
 
 trait CouchDB {
 
@@ -55,21 +58,28 @@ trait CouchDB {
     obj
   }
 
-  def read(id: String): Option[InputStream] = {
+  def read(id: String): Option[String] = {
     try{
-      Option(db getAsStream id)
+      Some(scala.io.Source.fromInputStream(db getAsStream id).mkString)
     } catch {
       case e: DocumentNotFoundException => None
     }
   }
 
   def update(obj: AnyRef) {
+    def latestRevision(id: String): Option[String] = {
+      read(id).map(doc => new ObjectMapper().readValue(doc, classOf[JsonNode]).path("_rev").getValueAsText)
+    }
+
+    val doc = obj.asInstanceOf[CouchDbDocument]
+    if(Option(doc.getRevision).isEmpty) { //Need a revision field in order to update. If no rev field, need to get one.
+      latestRevision(doc.getId).foreach(rev => doc.setRevision(rev))
+    }
     db update obj
   }
 
   def delete(obj: AnyRef) {
     try{
-//      println("Deleting: "+AppUtils.toJson(obj))
       db delete obj
     } catch {
       case e: UpdateConflictException => {} //probably a 409 error, no _rev field
@@ -80,8 +90,7 @@ trait CouchDB {
     import scala.collection.JavaConversions._
     val query = new ViewQuery().designDocId("_design/" + design).viewName(view)
     key.foreach(k => query.key(k))
-    val r = db.queryView(query).getRows
-    r.map(_.getValue).toList
+    db.queryView(query).getRows.map(_.getValue).toList
   }
 
 }

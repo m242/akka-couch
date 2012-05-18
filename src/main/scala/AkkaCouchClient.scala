@@ -23,8 +23,8 @@ trait AkkaCouchClient {
     CouchSystem.couchSupervisor ! Create(obj)
   }
 
-  def read(id: String): Option[InputStream] = {
-    Await.result(CouchSystem.couchSupervisor ? Read(id), dur).asInstanceOf[Option[InputStream]]
+  def read(id: String): Option[String] = {
+    Await.result(CouchSystem.couchSupervisor ? Read(id), dur).asInstanceOf[Option[String]]
   }
 
   def update(obj: AnyRef) {
