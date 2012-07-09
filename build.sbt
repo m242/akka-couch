@@ -4,7 +4,7 @@ name := "akka-couch"
 
 organization := "net.markbeeson"
 
-version := "1.0.8"
+version := "1.0.9"
 
 description := "Connector for Akka to talk to CouchDB"
 
