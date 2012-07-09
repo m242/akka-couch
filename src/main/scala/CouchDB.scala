@@ -16,13 +16,19 @@
 package net.markbeeson.akkacouch
 
 import org.ektorp.http.StdHttpClient
-import org.ektorp.impl.StdCouchDbInstance
-import org.ektorp.{UpdateConflictException, DocumentNotFoundException, ViewQuery}
 import com.typesafe.config._
 import org.ektorp.support.CouchDbDocument
 import org.codehaus.jackson.map.ObjectMapper
 import org.codehaus.jackson.JsonNode
 import akka.japi.Option.Some
+import org.ektorp.{UpdateConflictException, DocumentNotFoundException, ViewQuery}
+import org.ektorp.impl.{BulkOperation, JsonSerializer, StdCouchDbConnector, StdCouchDbInstance}
+
+object Serializer extends JsonSerializer {
+  def createBulkOperation(obj: java.util.Collection[_], allO: Boolean): BulkOperation = null: BulkOperation
+  def toJson(o: Object) = com.codahale.jerkson.Json.generate(o)
+  def apply() = this
+}
 
 trait CouchDB {
 
@@ -50,7 +56,9 @@ trait CouchDB {
 
   lazy val db = {
     val httpClient = new StdHttpClient.Builder().url(URL).build()
-    new StdCouchDbInstance(httpClient).createConnector(DB, true)
+    val conn = new StdCouchDbInstance(httpClient).createConnector(DB, true)
+    conn.asInstanceOf[StdCouchDbConnector].setJsonSerializer(Serializer())
+    conn
   }
 
   def create(obj: AnyRef): AnyRef = {

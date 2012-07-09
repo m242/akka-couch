@@ -4,7 +4,7 @@ name := "akka-couch"
 
 organization := "net.markbeeson"
 
-version := "1.0.4"
+version := "1.0.10"
 
 description := "Connector for Akka to talk to CouchDB"
 
@@ -13,6 +13,7 @@ resolvers ++= Seq(
 )
 
 libraryDependencies ++= Seq(
+	"com.codahale" %% "jerkson" % "0.5.0",
 	"org.ektorp" % "org.ektorp" % "1.2.2",
 	"com.typesafe.akka" % "akka-actor" % "2.0.1",
 	"com.typesafe.akka" % "akka-file-mailbox" % "2.0.1",
