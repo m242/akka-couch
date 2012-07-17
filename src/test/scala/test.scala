@@ -38,7 +38,7 @@ class AkkaCouch extends Specification {
 
     "write, sleep, then read a TestValue" in new couchRecord {
       val testId = "TEST" + scala.util.Random.nextLong
-      override val testRecord = Option(TestValue(testId))
+      override val testRecord = Option(new TestValue(testId))
       AkkaCouchClient.create(testRecord.get)
       Thread.sleep(2000)
       val res = AkkaCouchClient.read(testId)
@@ -47,7 +47,7 @@ class AkkaCouch extends Specification {
 
     "atomically write, then immediately read a TestValue" in new couchRecord {
       val testId = "TEST" + scala.util.Random.nextLong
-      override val testRecord = Option(TestValue(testId))
+      override val testRecord = Option(new TestValue(testId))
       AkkaCouchClient.createAtomic(testRecord.get)
       val res = AkkaCouchClient.read(testId)
       res must not be equalTo(None)
@@ -59,23 +59,25 @@ class AkkaCouch extends Specification {
       res must be equalTo(None)
     }
 
-    "respond to Query" in new couchRecord {      //How to test this?
-      val testId = "TEST" + scala.util.Random.nextLong
-      val res = AkkaCouchClient.query("voucher", "by_company", Option("YUM"))
-
-//      res must haveClass List
-    }
+//    "write, then respond to Query" in new couchRecord {      //How to test this? -Cannot test because cannot ensure design doc is present
+//      val testId = "TEST" + scala.util.Random.nextLong
+//      override val testRecord = Option(new TestValue(testId))
+//      AkkaCouchClient.createAtomic(testRecord.get)
+//      val res = AkkaCouchClient.query("voucher", "by_company", Option(testId))
+//
+////      res must haveClass List
+//    }
 
     "Atomically create, then update, sleep, then read updated value" in new couchRecord {
       val testId = "TEST" + scala.util.Random.nextLong
       val updated = "Updated123"
-      override val testRecord = Option(TestValue(testId))
+      override val testRecord = Option(new TestValue(testId))
 
       AkkaCouchClient.createAtomic(testRecord.get)
       testRecord.get.value = updated
       AkkaCouchClient.update(testRecord.get)
       Thread.sleep(2000)
-      val res = AkkaCouchClient.read(testRecord.get.id)
+      val res = AkkaCouchClient.read(testRecord.get.getId)
 
       res must not be equalTo(None)
       res.get must contain(updated)
@@ -109,7 +111,7 @@ class AkkaCouch extends Specification {
   }
 }
 
-case class TestValue(id: String) extends CouchDbDocument {
+class TestValue(id: String) extends CouchDbDocument {
   @JsonProperty var value:String = "myValue"
 
   def this(){this(null)}
