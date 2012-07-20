@@ -45,7 +45,7 @@ trait AkkaCouchClient {
   }
 }
 
-//object AkkaCouchClient extends AkkaCouchClient {
+object AkkaCouchClient extends AkkaCouchClient //{
 //  val d = new akka.util.DurationInt(2)
 //
 //  override implicit lazy val dur = d.seconds
