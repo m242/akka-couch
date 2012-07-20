@@ -5,6 +5,7 @@ import akka.util.duration._
 import akka.pattern.ask
 import akka.dispatch.Await
 import java.io.InputStream
+import akka.util.DurationInt
 
 /**
  * Created with IntelliJ IDEA.
@@ -16,7 +17,7 @@ import java.io.InputStream
 trait AkkaCouchClient {
   //todo: pull these values from elsewhere: config file?
 
-  implicit lazy val dur = 5 seconds
+  implicit lazy val dur = 1 milli //5 seconds
   implicit lazy val timeout = Timeout(dur)
 
   def create(obj: AnyRef) {
@@ -44,4 +45,10 @@ trait AkkaCouchClient {
   }
 }
 
-object AkkaCouchClient extends AkkaCouchClient
+//object AkkaCouchClient extends AkkaCouchClient {
+//  val d = new akka.util.DurationInt(2)
+//
+//  override implicit lazy val dur = d.seconds
+//  //5 seconds
+//  override implicit lazy val timeout = Timeout(dur)
+//}
