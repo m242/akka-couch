@@ -4,7 +4,7 @@ name := "akka-couch"
 
 organization := "net.markbeeson"
 
-version := "1.0.11"
+version := "1.0.13"
 
 description := "Connector for Akka to talk to CouchDB"
 
@@ -21,3 +21,5 @@ libraryDependencies ++= Seq(
 	"org.specs2" %% "specs2" % "1.8.2" % "test",
 	"com.typesafe" % "config" % "0.4.0"
 )
+
+publishTo := Some(Resolver.url("ultra", url("http://ultra.skechers.com:8081/artifactory/skechers"))(Patterns(true, "[organization]/[module]/[revision]/[module]-[revision](-[classifier]).[ext]")))
