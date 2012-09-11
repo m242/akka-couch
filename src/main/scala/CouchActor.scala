@@ -60,10 +60,11 @@ class CouchActor extends Actor with Logging with CouchDB {
       delete(obj)
     }
 
-    case Query(design: String, view: String, key: Option[_]) => {
+    //case Query(viewQuery: ViewQuery) => {
+    case Query(design, view, startKey, endKey) => {
       try{
         logger debug "Received query message"
-        sender ! query(design, view, key)
+        sender ! query(design, view, startKey, endKey)
       } catch {
         case e: Exception => sender ! akka.actor.Status.Failure(e)
         throw e
