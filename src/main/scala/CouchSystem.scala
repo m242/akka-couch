@@ -29,5 +29,31 @@ case class Create(obj: AnyRef)
 case class Read(id: String)
 case class Update(obj: AnyRef)
 case class Delete(obj: AnyRef)
-case class Query(design: String, view: String, key: Option[String])
+case class Query(design: String, view: String, startKey: Option[_]=None, endKey: Option[_]=None)
 
+//case class Query(design: String, view: String, startKey: Option[_] = None, endKey: Option[_] = None) {//, query: Option[ViewQuery] = None)
+//  var _viewQuery = null  //todo: would rather not use var & null, but this is better than adding another param
+//
+//  def this(v:ViewQuery) {
+//    this(v.getDesignDocId, v.getViewName, Option(v.getStartKey), Option(v.getEndKey))
+//    _viewQuery = v
+//  }
+//
+//  lazy val viewQuery = Option(_viewQuery).getOrElse(makeViewQuery)
+//
+//  def makeViewQuery = {
+//    val vq = new ViewQuery().designDocId("_design/" + design).viewName(view)
+//    startKey.foreach(k => vq.startKey(k))
+//    endKey.foreach(k => vq.endKey(k))
+//    vq
+//  }
+//
+//}
+
+//case class Query(viewQuery: ViewQuery) {
+//  def this(design: String, view: String, startKey: Option[_] = None, endKey: Option[_] = None) {
+//    this(new ViewQuery().designDocId("_design/" + design).viewName(view) )
+//    startKey.foreach(k => viewQuery.startKey(k))
+//    endKey.foreach(k => viewQuery.endKey(k))
+//  }
+//}

@@ -82,6 +82,24 @@ class AkkaCouch extends Specification {
       res must not be equalTo(None)
       res.get must contain(updated)
     }
+
+//    "Save new style" in {
+//      val i = scala.util.Random.alphanumeric.take(10).mkString
+//      println("IIII" + i)
+//      val n = Style(i,"name",Option("w"),"some dividsion")
+//      println("BBB" + Serializer.toJson(n))
+//      val r = AkkaCouchClient.createAtomic(n)
+//      println(r)
+//      1 must be equalTo(1)
+//    }
+
+
+//    "startkey endkey query" in {
+//      val x = AkkaCouchClient.query("order","orderAttempt",Some(1284051684000L),Some(1284059121000L))
+//      println(x)
+//      1 must be equalTo (1)
+//    }
+
   }
 
 
