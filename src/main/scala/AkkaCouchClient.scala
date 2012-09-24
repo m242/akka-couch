@@ -34,13 +34,13 @@ trait AkkaCouchClient {
     CouchSystem.couchSupervisor ! Delete(obj)
   }
 
-  def query(design: String, view: String, startKey: Option[_] = None, endKey: Option[_] = None): List[String] = {
-    Await.result(CouchSystem.couchSupervisor ? new Query(design, view, startKey, endKey), dur).asInstanceOf[List[String]]
-  }
-
-//  def query(viewQuery: ViewQuery): List[String] = {       //can't serialize ViewQuery
-//    Await.result(CouchSystem.couchSupervisor ? new Query(viewQuery), dur).asInstanceOf[List[String]]
+//  def query(design: String, view: String, startKey: Option[_] = None, endKey: Option[_] = None): List[String] = {
+//    Await.result(CouchSystem.couchSupervisor ? new Query(design, view, startKey, endKey), dur).asInstanceOf[List[String]]
 //  }
+
+  def query(viewQuery: VQuery): List[String] = {       //can't serialize ViewQuery
+    Await.result(CouchSystem.couchSupervisor ? new Query(viewQuery), dur).asInstanceOf[List[String]]
+  }
 
   def createAtomic[T <: AnyRef](obj: T): T = {
     Await.result(CouchSystem.couchSupervisor ? Create(obj), dur).asInstanceOf[T]

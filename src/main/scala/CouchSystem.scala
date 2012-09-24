@@ -16,6 +16,7 @@
 package net.markbeeson.akkacouch
 
 import akka.actor.{Props, ActorSystem}
+import org.ektorp.ViewQuery
 
 object CouchSystem {
   val DISPATCHER = "mydispatcher"
@@ -29,7 +30,10 @@ case class Create(obj: AnyRef)
 case class Read(id: String)
 case class Update(obj: AnyRef)
 case class Delete(obj: AnyRef)
-case class Query(design: String, view: String, startKey: Option[_]=None, endKey: Option[_]=None)
+//case class Query(design: String, view: String, startKey: Option[_]=None, endKey: Option[_]=None)
+case class Query(query: VQuery)
+
+case class VQuery() extends ViewQuery
 
 //case class Query(design: String, view: String, startKey: Option[_] = None, endKey: Option[_] = None) {//, query: Option[ViewQuery] = None)
 //  var _viewQuery = null  //todo: would rather not use var & null, but this is better than adding another param

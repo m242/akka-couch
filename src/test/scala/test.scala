@@ -12,10 +12,14 @@ import org.specs2.mutable._
 import org.ektorp.support.CouchDbDocument
 import org.ektorp.impl.StdObjectMapperFactory
 import org.codehaus.jackson.annotate.JsonProperty
+import org.ektorp.ViewQuery
+import collection.JavaConversions
 
 class AkkaCouch extends Specification {
 
   "AkkaCouchClient" should {
+
+    println("ABS TEST")
 
     "exist" in new couchRecord{
       AkkaCouchClient must not be equalTo(null)
@@ -84,6 +88,22 @@ class AkkaCouch extends Specification {
 //      println(x)
 //      1 must be equalTo (1)
 //    }
+
+      "startkey endkey query" in {
+        val q = new VQuery
+        q.designDocId("_design/" + "order")
+        q.viewName("orderAttempt")
+        val keys = JavaConversions.bufferAsJavaList( List(1284051684000L, 1284059121000L).toBuffer )
+        q.keys(keys)
+
+        println(q.getViewName)
+
+        val r = AkkaCouchClient.query(q)
+        println(r)
+//        val x = AkkaCouchClient.query("order","orderAttempt",Some(1284051684000L),Some(1284059121000L))
+//        println(x)
+        1 must be equalTo (1)
+      }
 
   }
 

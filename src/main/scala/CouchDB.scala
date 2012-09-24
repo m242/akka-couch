@@ -94,6 +94,11 @@ trait CouchDB {
     }
   }
 
+  def query(query: VQuery): List[String] = {
+    import scala.collection.JavaConversions._
+    db.queryView(query).getRows.map(_.getValue).toList
+  }
+
   def query(design: String, view: String, startKey: Option[_] = None, endKey: Option[_] = None): List[String] = {
     import scala.collection.JavaConversions._
     val query = new ViewQuery().designDocId("_design/" + design).viewName(view)
