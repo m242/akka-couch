@@ -31,33 +31,23 @@ case class Read(id: String)
 case class Update(obj: AnyRef)
 case class Delete(obj: AnyRef)
 //case class Query(design: String, view: String, startKey: Option[_]=None, endKey: Option[_]=None)
-case class Query(query: VQuery)
+case class Query(compiledQuery: String, keys:Option[String])
 
-case class VQuery() extends ViewQuery
+object Query {
+  def apply(viewQuery: ViewQuery):Query = Query(viewQuery.buildQuery, jsonKeysOption(viewQuery)) //compile the serializable query from view query
 
-//case class Query(design: String, view: String, startKey: Option[_] = None, endKey: Option[_] = None) {//, query: Option[ViewQuery] = None)
-//  var _viewQuery = null  //todo: would rather not use var & null, but this is better than adding another param
-//
-//  def this(v:ViewQuery) {
-//    this(v.getDesignDocId, v.getViewName, Option(v.getStartKey), Option(v.getEndKey))
-//    _viewQuery = v
-//  }
-//
-//  lazy val viewQuery = Option(_viewQuery).getOrElse(makeViewQuery)
-//
-//  def makeViewQuery = {
-//    val vq = new ViewQuery().designDocId("_design/" + design).viewName(view)
-//    startKey.foreach(k => vq.startKey(k))
-//    endKey.foreach(k => vq.endKey(k))
-//    vq
-//  }
-//
-//}
+  def jsonKeysOption(viewQuery: ViewQuery) = if(viewQuery.hasMultipleKeys) Some(viewQuery.getKeysAsJson) else None
+}
 
-//case class Query(viewQuery: ViewQuery) {
-//  def this(design: String, view: String, startKey: Option[_] = None, endKey: Option[_] = None) {
-//    this(new ViewQuery().designDocId("_design/" + design).viewName(view) )
-//    startKey.foreach(k => viewQuery.startKey(k))
-//    endKey.foreach(k => viewQuery.endKey(k))
-//  }
-//}
+object SkechersViewQuery {
+  def apply(query: Query): SkechersViewQuery = SkechersViewQuery(query.compiledQuery, query.keys)
+}
+
+case class SkechersViewQuery(queryString: String, jsonKeysOption:Option[String]) extends ViewQuery {
+  override def buildQuery = queryString
+
+  override def hasMultipleKeys = jsonKeysOption.isDefined
+
+  override def getKeysAsJson = jsonKeysOption.getOrElse(super.getKeysAsJson)
+
+}

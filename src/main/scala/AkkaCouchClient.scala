@@ -2,8 +2,9 @@ package net.markbeeson.akkacouch
 
 import akka.util.Timeout
 import akka.util.duration._
-import akka.pattern.ask
+import akka.pattern.ask //Need to keep this for ? operator
 import akka.dispatch.Await
+import org.ektorp.ViewQuery
 
 /**
  * Created with IntelliJ IDEA.
@@ -12,7 +13,7 @@ import akka.dispatch.Await
  * Time: 12:12 PM
  */
 
-trait AkkaCouchClient {
+trait AkkaCouchClient extends AkkaCouchSettings{
   //todo: pull these values from elsewhere: config file?
 
   implicit lazy val dur = 1 milli //5 seconds
@@ -38,8 +39,9 @@ trait AkkaCouchClient {
 //    Await.result(CouchSystem.couchSupervisor ? new Query(design, view, startKey, endKey), dur).asInstanceOf[List[String]]
 //  }
 
-  def query(viewQuery: VQuery): List[String] = {       //can't serialize ViewQuery
-    Await.result(CouchSystem.couchSupervisor ? new Query(viewQuery), dur).asInstanceOf[List[String]]
+  def query(viewQuery: ViewQuery): List[String] = {
+    viewQuery.dbPath(db.path) //add db path, force early build of query.
+    Await.result(CouchSystem.couchSupervisor ? Query(viewQuery), dur).asInstanceOf[List[String]]
   }
 
   def createAtomic[T <: AnyRef](obj: T): T = {
