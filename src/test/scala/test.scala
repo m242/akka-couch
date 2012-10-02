@@ -81,12 +81,12 @@ class AkkaCouch extends Specification {
 //    }
 
         /* This test only works if the view exists" */
-      "key list query" in {
-        val keys = scala.collection.JavaConversions.bufferAsJavaList( List(1284051684000L, 1284059121000L).toBuffer )
-        val q = new org.ektorp.ViewQuery().designDocId("_design/" + "order").viewName("orderAttempt").keys(keys)
-        val r = AkkaCouchClient.query(q)
-        r must haveSize(2)
-      }
+//      "key list query" in {
+//        val keys = scala.collection.JavaConversions.bufferAsJavaList( List(1284051684000L, 1284059121000L).toBuffer )
+//        val q = new org.ektorp.ViewQuery().designDocId("order").viewName("orderAttempt").keys(keys)    //test that "_design/" is automatically added
+//        val r = AkkaCouchClient.query(q)
+//        r must haveSize(2)
+//      }
 
   }
 

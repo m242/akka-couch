@@ -34,7 +34,13 @@ case class Delete(obj: AnyRef)
 case class Query(compiledQuery: String, keys:Option[String])
 
 object Query {
-  def apply(viewQuery: ViewQuery):Query = Query(viewQuery.buildQuery, jsonKeysOption(viewQuery)) //compile the serializable query from view query
+  private val designPath = "_design/"
+
+  def apply(viewQuery: ViewQuery):Query = { //compile the serializable query from view query
+    val designDocId = viewQuery.getDesignDocId
+    if (!designDocId.startsWith(designPath)) viewQuery.designDocId(designPath+designDocId) //So that we don't have to append "_design/" for every query
+    Query(viewQuery.buildQuery, jsonKeysOption(viewQuery))
+  }
 
   def jsonKeysOption(viewQuery: ViewQuery) = if(viewQuery.hasMultipleKeys) Some(viewQuery.getKeysAsJson) else None
 }
