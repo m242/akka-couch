@@ -64,7 +64,7 @@ trait AkkaCouchSettings {
 
 trait CouchDB extends AkkaCouchSettings{
 
-  def create(obj: AnyRef): AnyRef = {
+  def create[T<:AnyRef](obj: T): T = { // Return T instead of AnyRef
     db create obj
     obj
   }

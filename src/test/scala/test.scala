@@ -12,6 +12,7 @@ import org.specs2.mutable._
 import org.ektorp.support.CouchDbDocument
 import org.ektorp.impl.StdObjectMapperFactory
 import org.codehaus.jackson.annotate.JsonProperty
+import org.ektorp.ViewQuery
 
 class AkkaCouch extends Specification {
 
@@ -69,6 +70,13 @@ class AkkaCouch extends Specification {
       res must not be equalTo(None)
       res.get must contain(updated)
     }
+
+//    "Return a simple result" in {
+//      val q = new ViewQuery().designDocId("catalog").viewName("StylesByColorCode").key("ABLK")
+//      var res = AkkaCouchClient.query(q)
+//
+//      1 must be equalTo 1
+//    }
 
 //    "Save new style" in {
 //      val i = scala.util.Random.alphanumeric.take(10).mkString

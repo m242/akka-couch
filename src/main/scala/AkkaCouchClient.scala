@@ -13,7 +13,46 @@ import org.ektorp.ViewQuery
  * Time: 12:12 PM
  */
 
-trait AkkaCouchClient extends AkkaCouchSettings{
+trait PersistenceIfc {
+
+  def create(obj: AnyRef)
+
+  def read[T <: AnyRef : Manifest](id: String): Option[T]
+//  def readNoCache[T <: AnyRef : Manifest](id: String): Option[String]
+
+  def update(obj: AnyRef)
+
+  def delete(obj: AnyRef)
+
+  def query[T <: AnyRef : Manifest](viewQuery: ViewQuery): List[T]
+//  def queryNoCache[T <: AnyRef](viewQuery: ViewQuery): List[String]
+
+  def createAtomic[T <: AnyRef](obj: T): T
+}
+
+trait StringToType extends AkkaCouchClient {  //This solves the ambiguous conversion problem
+  def readAsString[T](id:String): Option[String] = super.read(id)
+  def queryAsString[T](viewQuery: ViewQuery): List[String] = super.query(viewQuery)
+}
+
+trait StringIfc {
+
+  def create(obj: AnyRef)
+
+  def read(id: String): Option[String]
+  //  def readNoCache[T <: AnyRef : Manifest](id: String): Option[String]
+
+  def update(obj: AnyRef)
+
+  def delete(obj: AnyRef)
+
+  def query(viewQuery: ViewQuery): List[String]
+  //  def queryNoCache[T <: AnyRef](viewQuery: ViewQuery): List[String]
+
+  def createAtomic[T <: AnyRef](obj: T): T
+}
+
+trait AkkaCouchClient extends StringIfc with AkkaCouchSettings{
   //todo: pull these values from elsewhere: config file?
 
   implicit lazy val dur = 1 milli //5 seconds
