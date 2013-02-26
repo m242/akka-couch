@@ -16,6 +16,7 @@
 package net.markbeeson.akkacouch
 
 import akka.actor.{Props, ActorSystem}
+import org.ektorp.ViewQuery
 
 object CouchSystem {
   val DISPATCHER = "mydispatcher"
@@ -29,31 +30,30 @@ case class Create(obj: AnyRef)
 case class Read(id: String)
 case class Update(obj: AnyRef)
 case class Delete(obj: AnyRef)
-case class Query(design: String, view: String, startKey: Option[_]=None, endKey: Option[_]=None)
+//case class Query(design: String, view: String, startKey: Option[_]=None, endKey: Option[_]=None)
+case class Query(compiledQuery: String, keys:Option[String])
 
-//case class Query(design: String, view: String, startKey: Option[_] = None, endKey: Option[_] = None) {//, query: Option[ViewQuery] = None)
-//  var _viewQuery = null  //todo: would rather not use var & null, but this is better than adding another param
-//
-//  def this(v:ViewQuery) {
-//    this(v.getDesignDocId, v.getViewName, Option(v.getStartKey), Option(v.getEndKey))
-//    _viewQuery = v
-//  }
-//
-//  lazy val viewQuery = Option(_viewQuery).getOrElse(makeViewQuery)
-//
-//  def makeViewQuery = {
-//    val vq = new ViewQuery().designDocId("_design/" + design).viewName(view)
-//    startKey.foreach(k => vq.startKey(k))
-//    endKey.foreach(k => vq.endKey(k))
-//    vq
-//  }
-//
-//}
+object Query {
+  private val designPath = "_design/"
 
-//case class Query(viewQuery: ViewQuery) {
-//  def this(design: String, view: String, startKey: Option[_] = None, endKey: Option[_] = None) {
-//    this(new ViewQuery().designDocId("_design/" + design).viewName(view) )
-//    startKey.foreach(k => viewQuery.startKey(k))
-//    endKey.foreach(k => viewQuery.endKey(k))
-//  }
-//}
+  def apply(viewQuery: ViewQuery):Query = { //compile the serializable query from view query
+    val designDocId = viewQuery.getDesignDocId
+    if (!designDocId.startsWith(designPath)) viewQuery.designDocId(designPath+designDocId) //So that we don't have to append "_design/" for every query
+    Query(viewQuery.buildQuery, jsonKeysOption(viewQuery))
+  }
+
+  def jsonKeysOption(viewQuery: ViewQuery) = if(viewQuery.hasMultipleKeys) Some(viewQuery.getKeysAsJson) else None
+}
+
+object SkechersViewQuery {
+  def apply(query: Query): SkechersViewQuery = SkechersViewQuery(query.compiledQuery, query.keys)
+}
+
+case class SkechersViewQuery(queryString: String, jsonKeysOption:Option[String]) extends ViewQuery {
+  override def buildQuery = queryString
+
+  override def hasMultipleKeys = jsonKeysOption.isDefined
+
+  override def getKeysAsJson = jsonKeysOption.getOrElse(super.getKeysAsJson)
+
+}
