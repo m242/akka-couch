@@ -27,10 +27,13 @@ import org.specs2.mutable._
 import org.ektorp.support.CouchDbDocument
 import org.ektorp.impl.StdObjectMapperFactory
 import org.codehaus.jackson.annotate.JsonProperty
+import org.ektorp.ViewQuery
 
 class AkkaCouch extends Specification {
 
   "AkkaCouchClient" should {
+
+    val sleepDuration = AkkaCouchClient.dur.toMillis
 
     "exist" in new couchRecord{
       AkkaCouchClient must not be equalTo(null)
@@ -40,7 +43,7 @@ class AkkaCouch extends Specification {
       val testId = "TEST" + scala.util.Random.nextLong
       override val testRecord = Option(new TestValue(testId))
       AkkaCouchClient.create(testRecord.get)
-      Thread.sleep(2000)
+      Thread.sleep(sleepDuration)
       val res = AkkaCouchClient.read(testId)
       res must not be equalTo(None)
     }
@@ -76,29 +79,37 @@ class AkkaCouch extends Specification {
       AkkaCouchClient.createAtomic(testRecord.get)
       testRecord.get.value = updated
       AkkaCouchClient.update(testRecord.get)
-      Thread.sleep(2000)
+      Thread.sleep(sleepDuration)
       val res = AkkaCouchClient.read(testRecord.get.getId)
 
       res must not be equalTo(None)
       res.get must contain(updated)
     }
 
+//    "Return a simple result" in {
+//      val q = new ViewQuery().designDocId("catalog").viewName("StylesByColorCode").key("ABLK")
+//      var res = AkkaCouchClient.query(q)
+//
+//      1 must be equalTo 1
+//    }
+
 //    "Save new style" in {
 //      val i = scala.util.Random.alphanumeric.take(10).mkString
 //      println("IIII" + i)
-//      val n = Style(i,"name",Option("w"),"some dividsion")
+//      val n = Style(i,"name",Option("w"),"some division")
 //      println("BBB" + Serializer.toJson(n))
 //      val r = AkkaCouchClient.createAtomic(n)
 //      println(r)
 //      1 must be equalTo(1)
 //    }
 
-
-//    "startkey endkey query" in {
-//      val x = AkkaCouchClient.query("order","orderAttempt",Some(1284051684000L),Some(1284059121000L))
-//      println(x)
-//      1 must be equalTo (1)
-//    }
+        /* This test only works if the view exists" */
+//      "key list query" in {
+//        val keys = scala.collection.JavaConversions.bufferAsJavaList( List(1284051684000L, 1284059121000L).toBuffer )
+//        val q = new org.ektorp.ViewQuery().designDocId("order").viewName("orderAttempt").keys(keys)    //test that "_design/" is automatically added
+//        val r = AkkaCouchClient.query(q)
+//        r must haveSize(2)
+//      }
 
   }
 
