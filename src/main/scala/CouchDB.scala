@@ -30,8 +30,7 @@ object Serializer extends JsonSerializer {
   def apply() = this
 }
 
-trait CouchDB {
-
+trait AkkaCouchSettings {
   lazy val conf = ConfigFactory.load()
 
   lazy val URL: String = try {
@@ -44,7 +43,7 @@ trait CouchDB {
     }
   }
 
-  lazy val DB: String = try {
+  lazy val databaseName: String = try {
     conf.getString("akka-couch.db")
   } catch {
     case e: ConfigException.Missing => {
@@ -56,12 +55,16 @@ trait CouchDB {
 
   lazy val db = {
     val httpClient = new StdHttpClient.Builder().url(URL).build()
-    val conn = new StdCouchDbInstance(httpClient).createConnector(DB, true)
+    val conn = new StdCouchDbInstance(httpClient).createConnector(databaseName, true)
     conn.asInstanceOf[StdCouchDbConnector].setJsonSerializer(Serializer())
     conn
   }
 
-  def create(obj: AnyRef): AnyRef = {
+}
+
+trait CouchDB extends AkkaCouchSettings{
+
+  def create[T<:AnyRef](obj: T): T = { // Return T instead of AnyRef
     db create obj
     obj
   }
@@ -75,7 +78,7 @@ trait CouchDB {
   }
 
   def update(obj: AnyRef) {
-    def latestRevision(id: String): Option[String] = {
+    def latestRevision(id: String): Option[String] = {                                      //.toString gives a bad value - bad " chars
       read(id).map(doc => new ObjectMapper().readValue(doc, classOf[JsonNode]).path("_rev").getValueAsText)
     }
 
@@ -94,12 +97,10 @@ trait CouchDB {
     }
   }
 
-  def query(design: String, view: String, startKey: Option[_] = None, endKey: Option[_] = None): List[String] = {
+  def query(query: Query) = {
     import scala.collection.JavaConversions._
-    val query = new ViewQuery().designDocId("_design/" + design).viewName(view)
-    startKey.foreach(k => query.startKey(k))
-    endKey.foreach(k => query.endKey(k))
-    db.queryView(query).getRows.map(_.getValue).toList
+    val viewQuery = SkechersViewQuery(query) //put this query string into the cache of an ektorp ViewQuery
+    db.queryView(viewQuery).getRows.map(_.getValue).toList
   }
 
 }
