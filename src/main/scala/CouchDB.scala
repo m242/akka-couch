@@ -23,6 +23,7 @@ import org.codehaus.jackson.JsonNode
 import akka.japi.Option.Some
 import org.ektorp.{UpdateConflictException, DocumentNotFoundException, ViewQuery}
 import org.ektorp.impl.{BulkOperation, JsonSerializer, StdCouchDbConnector, StdCouchDbInstance}
+import com.weiglewilczek.slf4s.Logging
 
 object Serializer extends JsonSerializer {
   def createBulkOperation(obj: java.util.Collection[_], allO: Boolean): BulkOperation = null: BulkOperation
@@ -30,14 +31,14 @@ object Serializer extends JsonSerializer {
   def apply() = this
 }
 
-trait AkkaCouchSettings {
+trait AkkaCouchSettings extends Logging {
   lazy val conf = ConfigFactory.load()
 
   lazy val URL: String = try {
     conf.getString("akka-couch.host")
   } catch {
     case e: ConfigException.Missing => {
-      println("Missing setting: akka-couch.host")
+      logger.error("Missing setting: akka-couch.host")
       throw e
       ""
     }
@@ -47,14 +48,45 @@ trait AkkaCouchSettings {
     conf.getString("akka-couch.db")
   } catch {
     case e: ConfigException.Missing => {
-      println("Missing setting: akka-couch.db")
+      logger.error("Missing setting: akka-couch.db")
       throw e
       ""
     }
   }
 
+//  http://www.ektorp.org/reference_documentation.html#d100e128
+  lazy val connectionTimeout: Option[Long] = try {Option(conf.getMilliseconds("akka-couch.connection.connectionTimeout"))} catch {case e: ConfigException.Missing => {None}}
+  lazy val socketTimeout: Option[Long] = try {Option(conf.getMilliseconds("akka-couch.connection.socketTimeout"))} catch {case e: ConfigException.Missing => {None}}
+  lazy val maxObjectSizeBytes: Option[Int] = try {Option(conf.getInt("akka-couch.connection.maxObjectSizeBytes"))} catch {case e: ConfigException.Missing => {None}}
+
+  lazy val maxConnections: Option[Int] = try {Option(conf.getInt("akka-couch.connection.maxConnections"))} catch {case e: ConfigException.Missing => {None}}
+  lazy val cleanupIdleConnections: Option[Boolean] = try {Option(conf.getBoolean("akka-couch.connection.cleanupIdleConnections"))} catch {case e: ConfigException.Missing => {None}}
+
+
   lazy val db = {
-    val httpClient = new StdHttpClient.Builder().url(URL).build()
+    val httpBuilder = new StdHttpClient.Builder().url(URL)
+    connectionTimeout.map(t =>  {
+      httpBuilder.connectionTimeout(t.toInt)
+      logger.info("connectionTimeout: " + t)
+    })
+    socketTimeout.map(t =>  {
+      httpBuilder.socketTimeout(t.toInt)
+      logger.info("socketTimeout: " + t)
+    })
+    maxObjectSizeBytes.map(s => {
+      httpBuilder.maxObjectSizeBytes(s)
+      logger.info("maxObjectSizeBytes: " + s)
+    })
+    maxConnections.map(c =>  {
+      httpBuilder.maxConnections(c)
+      logger.info("maxConnections " + c)
+    })
+    cleanupIdleConnections.map(b =>  {
+      httpBuilder.cleanupIdleConnections(b)
+      logger.info("cleanupIdleConnections: " + b)
+    })
+
+    val httpClient = httpBuilder.build()
     val conn = new StdCouchDbInstance(httpClient).createConnector(databaseName, true)
     conn.asInstanceOf[StdCouchDbConnector].setJsonSerializer(Serializer())
     conn
