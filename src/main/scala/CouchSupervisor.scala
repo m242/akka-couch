@@ -21,6 +21,7 @@ import org.ektorp.DbAccessException
 import akka.actor._
 import akka.routing.RoundRobinRouter
 import akka.actor.SupervisorStrategy.{Restart, Stop}
+import com.typesafe.config.{ConfigException, ConfigFactory}
 
 class CouchSupervisor extends Actor with Logging {
   var couchActor: Option[ActorRef] = None
@@ -30,15 +31,15 @@ class CouchSupervisor extends Actor with Logging {
     withinTimeRange = 1 minute) {
 
     case aie: ActorInitializationException => {
-      logger.debug("Exception starting CouchActor: " + aie.toString)
+      logger.error("Exception starting CouchActor: " + aie.toString)
       Stop
     }
     case dbe: DbAccessException => {
-      logger.debug("Exception connecting CouchActor: " + dbe.toString)
+      logger.error("Exception connecting CouchActor: " + dbe.toString)
       Stop
     }
     case e: Exception => {
-      logger.debug("Exception in CouchActor: " + e.toString)
+      logger.error("Exception in CouchActor: " + e.toString)
       Restart
     }
   }
@@ -57,8 +58,10 @@ class CouchSupervisor extends Actor with Logging {
 
   def initActor() {
     logger debug "Initializing CouchActor"
+    val nrOfInstances: Int = try {ConfigFactory.load().getInt("akka-couch.numberOfInstances")} catch {case e: ConfigException.Missing => {5}}
+
     couchActor = Some(context.watch(context.actorOf(Props[CouchActor]
-      .withRouter(RoundRobinRouter(5, supervisorStrategy = supervisorStrategy))
+      .withRouter(RoundRobinRouter(nrOfInstances, supervisorStrategy = supervisorStrategy))
       .withDispatcher(CouchSystem.DISPATCHER), name = "couchActor")))
   }
 
