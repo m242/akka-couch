@@ -23,7 +23,7 @@ import org.codehaus.jackson.JsonNode
 import akka.japi.Option.Some
 import org.ektorp.{UpdateConflictException, DocumentNotFoundException, ViewQuery}
 import org.ektorp.impl.{BulkOperation, JsonSerializer, StdCouchDbConnector, StdCouchDbInstance}
-import com.weiglewilczek.slf4s.Logging
+import com.weiglewilczek.slf4s.Logger
 
 object Serializer extends JsonSerializer {
   def createBulkOperation(obj: java.util.Collection[_], allO: Boolean): BulkOperation = null: BulkOperation
@@ -31,14 +31,15 @@ object Serializer extends JsonSerializer {
   def apply() = this
 }
 
-trait AkkaCouchSettings extends Logging {
+trait AkkaCouchSettings {
   lazy val conf = ConfigFactory.load()
+  lazy val log = Logger("net.markbeeson.akkacouch.AkkaCouchSettings")
 
   lazy val URL: String = try {
     conf.getString("akka-couch.host")
   } catch {
     case e: ConfigException.Missing => {
-      logger.error("Missing setting: akka-couch.host")
+      log.error("Missing setting: akka-couch.host")
       throw e
       ""
     }
@@ -48,7 +49,7 @@ trait AkkaCouchSettings extends Logging {
     conf.getString("akka-couch.db")
   } catch {
     case e: ConfigException.Missing => {
-      logger.error("Missing setting: akka-couch.db")
+      log.error("Missing setting: akka-couch.db")
       throw e
       ""
     }
@@ -67,23 +68,23 @@ trait AkkaCouchSettings extends Logging {
     val httpBuilder = new StdHttpClient.Builder().url(URL)
     connectionTimeout.map(t =>  {
       httpBuilder.connectionTimeout(t.toInt)
-      logger.info("connectionTimeout: " + t)
+      log.info("connectionTimeout: " + t)
     })
     socketTimeout.map(t =>  {
       httpBuilder.socketTimeout(t.toInt)
-      logger.info("socketTimeout: " + t)
+      log.info("socketTimeout: " + t)
     })
     maxObjectSizeBytes.map(s => {
       httpBuilder.maxObjectSizeBytes(s)
-      logger.info("maxObjectSizeBytes: " + s)
+      log.info("maxObjectSizeBytes: " + s)
     })
     maxConnections.map(c =>  {
       httpBuilder.maxConnections(c)
-      logger.info("maxConnections " + c)
+      log.info("maxConnections " + c)
     })
     cleanupIdleConnections.map(b =>  {
       httpBuilder.cleanupIdleConnections(b)
-      logger.info("cleanupIdleConnections: " + b)
+      log.info("cleanupIdleConnections: " + b)
     })
 
     val httpClient = httpBuilder.build()
