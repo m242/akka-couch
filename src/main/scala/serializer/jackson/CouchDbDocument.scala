@@ -23,8 +23,8 @@ class CouchDbDocument extends net.markbeeson.akkacouch.CouchDbDocument {
   @JsonIgnore def isNew = rev == null
   @JsonIgnore def hasConflict = !conflicts.isEmpty
 
-  def getId() = id
+  @JsonIgnore def getId() = id
   def setId(id:String) = this.id = id
-  def getRevision() = rev
+  @JsonIgnore def getRevision() = rev
   def setRevision(rev:String) = this.rev = rev
 }
