@@ -30,7 +30,7 @@ class CouchActor extends Actor with Logging with CouchDB {
     // may vary. The important part is to not intercept exceptions, and let them
     // bubble up to the supervisor.
 
-    case Create(obj: AnyRef) => {
+    case Create(obj: CouchDbDocument) => {
       try{
         logger debug "Received create message"
         sender ! create(obj)
@@ -50,12 +50,12 @@ class CouchActor extends Actor with Logging with CouchDB {
       }
     }
 
-    case Update(obj: AnyRef) => {
+    case Update(obj: CouchDbDocument) => {
       logger debug "Received update message"
       update(obj)
     }
 
-    case Delete(obj: AnyRef) => {
+    case Delete(obj: CouchDbDocument) => {
       logger debug "Received delete message"
       delete(obj)
     }

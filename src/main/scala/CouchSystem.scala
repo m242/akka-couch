@@ -26,10 +26,10 @@ object CouchSystem {
     .withDispatcher(DISPATCHER), "couchSupervisor")
 }
 
-case class Create(obj: AnyRef)
+case class Create[T <: CouchDbDocument](obj: T)
 case class Read(id: String)
-case class Update(obj: AnyRef)
-case class Delete(obj: AnyRef)
+case class Update[T <: CouchDbDocument](obj: T)
+case class Delete[T <: CouchDbDocument](obj: T)
 //case class Query(design: String, view: String, startKey: Option[_]=None, endKey: Option[_]=None)
 case class Query(compiledQuery: String, keys:Option[String])
 

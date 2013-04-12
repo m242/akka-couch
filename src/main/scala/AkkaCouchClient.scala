@@ -16,9 +16,9 @@
 package net.markbeeson.akkacouch
 
 import akka.util.Timeout
-import akka.util.duration._
 import akka.pattern.ask //Need to keep this for ? operator
-import akka.dispatch.Await
+import concurrent.Await
+import concurrent.duration._
 import org.ektorp.ViewQuery
 
 /**
@@ -30,19 +30,19 @@ import org.ektorp.ViewQuery
 
 trait PersistenceIfc {
 
-  def create(obj: AnyRef)
+  def create[T <: CouchDbDocument](obj: T)
 
   def read[T <: AnyRef : Manifest](id: String): Option[T]
 //  def readNoCache[T <: AnyRef : Manifest](id: String): Option[String]
 
-  def update(obj: AnyRef)
+  def update[T <: CouchDbDocument](obj: T)
 
-  def delete(obj: AnyRef)
+  def delete[T <: CouchDbDocument](obj: T)
 
   def query[T <: AnyRef : Manifest](viewQuery: ViewQuery): List[T]
 //  def queryNoCache[T <: AnyRef](viewQuery: ViewQuery): List[String]
 
-  def createAtomic[T <: AnyRef](obj: T): T
+  def createAtomic[T <: CouchDbDocument](obj: T): T
 }
 
 trait StringToType extends AkkaCouchClient {  //This solves the ambiguous conversion problem
@@ -52,28 +52,28 @@ trait StringToType extends AkkaCouchClient {  //This solves the ambiguous conver
 
 trait StringIfc {
 
-  def create(obj: AnyRef)
+  def create[T <: CouchDbDocument](obj: T)
 
   def read(id: String): Option[String]
   //  def readNoCache[T <: AnyRef : Manifest](id: String): Option[String]
 
-  def update(obj: AnyRef)
+  def update[T <: CouchDbDocument](obj: T)
 
-  def delete(obj: AnyRef)
+  def delete[T <: CouchDbDocument](obj: T)
 
   def query(viewQuery: ViewQuery): List[String]
   //  def queryNoCache[T <: AnyRef](viewQuery: ViewQuery): List[String]
 
-  def createAtomic[T <: AnyRef](obj: T): T
+  def createAtomic[T <: CouchDbDocument](obj: T): T
 }
 
 trait AkkaCouchClient extends StringIfc with AkkaCouchSettings{
   //todo: pull these values from elsewhere: config file?
 
-  implicit lazy val dur = 1 milli //5 seconds
-  implicit lazy val timeout = Timeout(dur)
+  implicit lazy val dur = Duration(1, "seconds") //1 seconds
+  implicit lazy val timeout = Timeout(dur.toMillis)
 
-  def create(obj: AnyRef) {
+  def create[T <: CouchDbDocument](obj: T) {
     CouchSystem.couchSupervisor ! Create(obj)
   }
 
@@ -81,11 +81,11 @@ trait AkkaCouchClient extends StringIfc with AkkaCouchSettings{
     Await.result(CouchSystem.couchSupervisor ? Read(id), dur).asInstanceOf[Option[String]]
   }
 
-  def update(obj: AnyRef) {
+  def update[T <: CouchDbDocument](obj: T) {
     CouchSystem.couchSupervisor ! Update(obj)
   }
 
-  def delete(obj: AnyRef) {
+  def delete[T <: CouchDbDocument](obj: T) {
     CouchSystem.couchSupervisor ! Delete(obj)
   }
 
@@ -98,15 +98,12 @@ trait AkkaCouchClient extends StringIfc with AkkaCouchSettings{
     Await.result(CouchSystem.couchSupervisor ? Query(viewQuery), dur).asInstanceOf[List[String]]
   }
 
-  def createAtomic[T <: AnyRef](obj: T): T = {
+  def createAtomic[T <: CouchDbDocument](obj: T): T = {
     Await.result(CouchSystem.couchSupervisor ? Create(obj), dur).asInstanceOf[T]
   }
 }
 
 object AkkaCouchClient extends AkkaCouchClient {
-  val d = new akka.util.DurationInt(5000) //5 seconds
-
-  override implicit lazy val dur = d.millis
-
-  override implicit lazy val timeout = Timeout(dur)
+  override implicit lazy val dur:scala.concurrent.duration.FiniteDuration = scala.concurrent.duration.Duration(5, "seconds") //5 seconds
+  override implicit lazy val timeout = Timeout(dur.toMillis)
 }

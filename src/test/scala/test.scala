@@ -24,10 +24,8 @@ package net.markbeeson.akkacouch
 
 import org.specs2.mutable
 import org.specs2.mutable._
-import org.ektorp.support.CouchDbDocument
-import org.ektorp.impl.StdObjectMapperFactory
-import org.codehaus.jackson.annotate.JsonProperty
-import org.ektorp.ViewQuery
+import com.fasterxml.jackson.annotation.JsonProperty
+import serializer.jackson.JacksonWrapper
 
 class AkkaCouch extends Specification {
 
@@ -41,7 +39,7 @@ class AkkaCouch extends Specification {
 
     "write, sleep, then read a TestValue" in new couchRecord {
       val testId = "TEST" + scala.util.Random.nextLong
-      override val testRecord = Option(new TestValue(testId))
+      override val testRecord = Option(TestValue(testId))
       AkkaCouchClient.create(testRecord.get)
       Thread.sleep(sleepDuration)
       val res = AkkaCouchClient.read(testId)
@@ -50,7 +48,7 @@ class AkkaCouch extends Specification {
 
     "atomically write, then immediately read a TestValue" in new couchRecord {
       val testId = "TEST" + scala.util.Random.nextLong
-      override val testRecord = Option(new TestValue(testId))
+      override val testRecord = Option(TestValue(testId))
       AkkaCouchClient.createAtomic(testRecord.get)
       val res = AkkaCouchClient.read(testId)
       res must not be equalTo(None)
@@ -74,13 +72,13 @@ class AkkaCouch extends Specification {
     "Atomically create, then update, sleep, then read updated value" in new couchRecord {
       val testId = "TEST" + scala.util.Random.nextLong
       val updated = "Updated123"
-      override val testRecord = Option(new TestValue(testId))
+      override val testRecord = Option(TestValue(testId))
 
       AkkaCouchClient.createAtomic(testRecord.get)
       testRecord.get.value = updated
       AkkaCouchClient.update(testRecord.get)
       Thread.sleep(sleepDuration)
-      val res = AkkaCouchClient.read(testRecord.get.getId)
+      val res = AkkaCouchClient.read(testRecord.get.id)
 
       res must not be equalTo(None)
       res.get must contain(updated)
@@ -116,18 +114,12 @@ class AkkaCouch extends Specification {
 
   trait couchRecord extends mutable.After {
 
-    private[this] def valueOf[T <: AnyRef](in: String, clazz: Class[T]): T = {
-      val mapperFactory = new StdObjectMapperFactory()
-      val jacksonMapper = mapperFactory.createObjectMapper()
-      jacksonMapper.readValue(in, clazz) //manifest[T].erasure) //todo: use FasterXML-jackson and jacks on github to obviate clazz
-    }
-
-    val testRecord: Option[CouchDbDocument] = None
+    val testRecord: Option[net.markbeeson.akkacouch.serializer.jackson.CouchDbDocument] = None
     def after() { //clean up created record
       try{
         testRecord.foreach(r => {
-          AkkaCouchClient.read(r.getId).foreach(s => {
-            AkkaCouchClient.delete(valueOf(s, classOf[TestValue]))
+          AkkaCouchClient.read(r.id).foreach(s => {
+            AkkaCouchClient.delete(JacksonWrapper.deserialize[TestValue](s))
           })
         })
       } catch {
@@ -140,9 +132,13 @@ class AkkaCouch extends Specification {
   }
 }
 
-class TestValue(id: String) extends CouchDbDocument {
+object TestValue  {
+  def apply(id: String) = {
+    val v1 = new TestValue
+    v1.id = id
+    v1
+  }
+}
+class TestValue extends net.markbeeson.akkacouch.serializer.jackson.CouchDbDocument {
   @JsonProperty var value:String = "myValue"
-
-  def this(){this(null)}
-  Option(id).foreach(i => setId(i))
 }

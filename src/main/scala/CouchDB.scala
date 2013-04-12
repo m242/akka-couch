@@ -17,19 +17,11 @@ package net.markbeeson.akkacouch
 
 import org.ektorp.http.StdHttpClient
 import com.typesafe.config._
-import org.ektorp.support.CouchDbDocument
-import org.codehaus.jackson.map.ObjectMapper
-import org.codehaus.jackson.JsonNode
+import com.fasterxml.jackson.databind.{JsonNode, ObjectMapper}
 import akka.japi.Option.Some
-import org.ektorp.{UpdateConflictException, DocumentNotFoundException, ViewQuery}
-import org.ektorp.impl.{BulkOperation, JsonSerializer, StdCouchDbConnector, StdCouchDbInstance}
+import org.ektorp.{UpdateConflictException, DocumentNotFoundException}
+import org.ektorp.impl.{StdCouchDbConnector, StdCouchDbInstance}
 import com.weiglewilczek.slf4s.Logger
-
-object Serializer extends JsonSerializer {
-  def createBulkOperation(obj: java.util.Collection[_], allO: Boolean): BulkOperation = null: BulkOperation
-  def toJson(o: Object) = com.codahale.jerkson.Json.generate(o)
-  def apply() = this
-}
 
 trait AkkaCouchSettings {
   lazy val conf = ConfigFactory.load()
@@ -63,6 +55,8 @@ trait AkkaCouchSettings {
   lazy val maxConnections: Option[Int] = try {Option(conf.getInt("akka-couch.connection.maxConnections"))} catch {case e: ConfigException.Missing => {None}}
   lazy val cleanupIdleConnections: Option[Boolean] = try {Option(conf.getBoolean("akka-couch.connection.cleanupIdleConnections"))} catch {case e: ConfigException.Missing => {None}}
 
+  lazy val serializerClass: String = try {conf.getString("akka-couch.serializer")} catch {case e: ConfigException.Missing => {"net.markbeeson.akkacouch.serializer.jackson.JacksonSerializer"}}
+  lazy val jsonSerializer: JsonSerializer = Class.forName(serializerClass).newInstance().asInstanceOf[JsonSerializer]
 
   lazy val db = {
     val httpBuilder = new StdHttpClient.Builder().url(URL)
@@ -89,7 +83,7 @@ trait AkkaCouchSettings {
 
     val httpClient = httpBuilder.build()
     val conn = new StdCouchDbInstance(httpClient).createConnector(databaseName, true)
-    conn.asInstanceOf[StdCouchDbConnector].setJsonSerializer(Serializer())
+    conn.asInstanceOf[StdCouchDbConnector].setJsonSerializer(jsonSerializer)
     conn
   }
 
@@ -110,19 +104,18 @@ trait CouchDB extends AkkaCouchSettings{
     }
   }
 
-  def update(obj: AnyRef) {
+  def update[T <: CouchDbDocument](obj: T) {
     def latestRevision(id: String): Option[String] = {                                      //.toString gives a bad value - bad " chars
-      read(id).map(doc => new ObjectMapper().readValue(doc, classOf[JsonNode]).path("_rev").getValueAsText)
+      read(id).map(doc => new ObjectMapper().readValue(doc, classOf[JsonNode]).path("_rev").textValue)
     }
 
-    val doc = obj.asInstanceOf[CouchDbDocument]
-    if(Option(doc.getRevision).isEmpty) { //Need a revision field in order to update. If no rev field, need to get one.
-      latestRevision(doc.getId).foreach(rev => doc.setRevision(rev))
+    if(Option(obj.getRevision).isEmpty) { //Need a revision field in order to update. If no rev field, need to get one.
+      latestRevision(obj.getId).foreach(rev => obj.setRevision(rev))
     }
     db update obj
   }
 
-  def delete(obj: AnyRef) {
+  def delete[T <: CouchDbDocument](obj: T) {
     try{
       db delete obj
     } catch {

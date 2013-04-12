@@ -15,13 +15,14 @@
  */
 package net.markbeeson.akkacouch
 
-import akka.util.duration._
 import com.weiglewilczek.slf4s.Logging
 import org.ektorp.DbAccessException
 import akka.actor._
 import akka.routing.RoundRobinRouter
 import akka.actor.SupervisorStrategy.{Restart, Stop}
 import com.typesafe.config.{ConfigException, ConfigFactory}
+import concurrent.duration._
+import concurrent.ExecutionContext.Implicits.global
 
 class CouchSupervisor extends Actor with Logging {
   var couchActor: Option[ActorRef] = None
