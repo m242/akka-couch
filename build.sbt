@@ -2,7 +2,7 @@ name := "akka-couch"
 
 organization := "net.markbeeson"
 
-version := "1.1.0-SNAPSHOT"
+version := "1.1.0"
 
 scalaVersion := "2.10.1"
 
@@ -18,9 +18,9 @@ libraryDependencies ++= Seq(
 	"com.typesafe.akka" % "akka-actor_2.10" % "2.1.2",
 	"com.typesafe.akka" % "akka-file-mailbox_2.10" % "2.1.2",
 	"com.weiglewilczek.slf4s" % "slf4s_2.9.1" % "1.0.7",
-	"org.specs2" %% "specs2" % "1.14" % "test",
+	"org.specs2" % "specs2_2.10" % "1.14",
 	"com.typesafe" % "config" % "1.0.0"
 )
 
-//publishTo := Some(Resolver.url("ultra", url("http://ultra.skechers.com:8081/artifactory/skechers"))(Patterns(true, "[organization]/[module]/[revision]/[module]-[revision](-[classifier]).[ext]")))
-publishTo :=  Some("Skechers Artifacts" at "http://ultra:8081/artifactory/snapshots")
+publishTo := Some(Resolver.url("ultra", url("http://ultra.skechers.com:8081/artifactory/skechers"))(Patterns(true, "[organization]/[module]/[revision]/[module]-[revision](-[classifier]).[ext]")))
+//publishTo :=  Some("Skechers Artifacts" at "http://ultra:8081/artifactory/snapshots")
