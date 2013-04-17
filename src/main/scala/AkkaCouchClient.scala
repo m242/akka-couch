@@ -42,12 +42,15 @@ trait PersistenceIfc {
   def query[T <: AnyRef : Manifest](viewQuery: ViewQuery): List[T]
 //  def queryNoCache[T <: AnyRef](viewQuery: ViewQuery): List[String]
 
+  def kvQuery[T <: AnyRef : Manifest](viewQuery: ViewQuery): List[(String, T)]
+
   def createAtomic[T <: AnyRef](obj: T): T
 }
 
 trait StringToType extends AkkaCouchClient {  //This solves the ambiguous conversion problem
   def readAsString[T](id:String): Option[String] = super.read(id)
   def queryAsString[T](viewQuery: ViewQuery): List[String] = super.query(viewQuery)
+  def kvQueryAsString[T](viewQuery: ViewQuery): List[(String, AnyRef)] = super.kvQuery(viewQuery)
 }
 
 trait StringIfc {
@@ -63,6 +66,8 @@ trait StringIfc {
 
   def query(viewQuery: ViewQuery): List[String]
   //  def queryNoCache[T <: AnyRef](viewQuery: ViewQuery): List[String]
+
+  def kvQuery(viewQuery: ViewQuery): List[(String, AnyRef)]
 
   def createAtomic[T <: AnyRef](obj: T): T
 }
@@ -95,7 +100,12 @@ trait AkkaCouchClient extends StringIfc with AkkaCouchSettings{
 
   def query(viewQuery: ViewQuery): List[String] = {
     viewQuery.dbPath(db.path) //add db path, force early build of query.
-    Await.result(CouchSystem.couchSupervisor ? Query(viewQuery), dur).asInstanceOf[List[String]]
+    Await.result(CouchSystem.couchSupervisor ? Query(viewQuery, None), dur).asInstanceOf[List[String]]
+  }
+
+  def kvQuery(viewQuery: ViewQuery): List[(String, AnyRef)] = {
+    viewQuery.dbPath(db.path) //add db path, force early build of query.
+    Await.result(CouchSystem.couchSupervisor ? Query(viewQuery, Some(true)), dur).asInstanceOf[List[(String, String)]]
   }
 
   def createAtomic[T <: AnyRef](obj: T): T = {
