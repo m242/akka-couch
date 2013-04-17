@@ -33,21 +33,24 @@ trait PersistenceIfc {
   def create[T <: CouchDbDocument](obj: T)
 
   def read[T <: AnyRef : Manifest](id: String): Option[T]
-//  def readNoCache[T <: AnyRef : Manifest](id: String): Option[String]
+  //  def readNoCache[T <: AnyRef : Manifest](id: String): Option[String]
 
   def update[T <: CouchDbDocument](obj: T)
 
   def delete[T <: CouchDbDocument](obj: T)
 
   def query[T <: AnyRef : Manifest](viewQuery: ViewQuery): List[T]
-//  def queryNoCache[T <: AnyRef](viewQuery: ViewQuery): List[String]
+  //  def queryNoCache[T <: AnyRef](viewQuery: ViewQuery): List[String]
+
+  def kvQuery[T <: AnyRef : Manifest](viewQuery: ViewQuery): List[(String, T)]
 
   def createAtomic[T <: CouchDbDocument](obj: T): T
 }
 
 trait StringToType extends AkkaCouchClient {  //This solves the ambiguous conversion problem
-  def readAsString[T](id:String): Option[String] = super.read(id)
+def readAsString[T](id:String): Option[String] = super.read(id)
   def queryAsString[T](viewQuery: ViewQuery): List[String] = super.query(viewQuery)
+  def kvQueryAsString[T](viewQuery: ViewQuery): List[(String, AnyRef)] = super.kvQuery(viewQuery)
 }
 
 trait StringIfc {
@@ -63,6 +66,8 @@ trait StringIfc {
 
   def query(viewQuery: ViewQuery): List[String]
   //  def queryNoCache[T <: AnyRef](viewQuery: ViewQuery): List[String]
+
+  def kvQuery(viewQuery: ViewQuery): List[(String, AnyRef)]
 
   def createAtomic[T <: CouchDbDocument](obj: T): T
 }
@@ -89,13 +94,18 @@ trait AkkaCouchClient extends StringIfc with AkkaCouchSettings{
     CouchSystem.couchSupervisor ! Delete(obj)
   }
 
-//  def query(design: String, view: String, startKey: Option[_] = None, endKey: Option[_] = None): List[String] = {
-//    Await.result(CouchSystem.couchSupervisor ? new Query(design, view, startKey, endKey), dur).asInstanceOf[List[String]]
-//  }
+  //  def query(design: String, view: String, startKey: Option[_] = None, endKey: Option[_] = None): List[String] = {
+  //    Await.result(CouchSystem.couchSupervisor ? new Query(design, view, startKey, endKey), dur).asInstanceOf[List[String]]
+  //  }
 
   def query(viewQuery: ViewQuery): List[String] = {
     viewQuery.dbPath(db.path) //add db path, force early build of query.
-    Await.result(CouchSystem.couchSupervisor ? Query(viewQuery), dur).asInstanceOf[List[String]]
+    Await.result(CouchSystem.couchSupervisor ? Query(viewQuery, None), dur).asInstanceOf[List[String]]
+  }
+
+  def kvQuery(viewQuery: ViewQuery): List[(String, AnyRef)] = {
+    viewQuery.dbPath(db.path) //add db path, force early build of query.
+    Await.result(CouchSystem.couchSupervisor ? Query(viewQuery, Some(true)), dur).asInstanceOf[List[(String, String)]]
   }
 
   def createAtomic[T <: CouchDbDocument](obj: T): T = {

@@ -128,5 +128,11 @@ trait CouchDB extends AkkaCouchSettings{
     val viewQuery = SkechersViewQuery(query) //put this query string into the cache of an ektorp ViewQuery
     db.queryView(viewQuery).getRows.map(_.getValue).toList
   }
+  
+  def kvQuery(query: Query) = {
+    import scala.collection.JavaConversions._
+    val viewQuery = SkechersViewQuery(query) //put this query string into the cache of an ektorp ViewQuery
+    db.queryView(viewQuery).getRows.map(r=>(r.getKey, r.getValue)).toList
+  }
 
 }
