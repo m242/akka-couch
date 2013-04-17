@@ -31,15 +31,18 @@ case class Read(id: String)
 case class Update(obj: AnyRef)
 case class Delete(obj: AnyRef)
 //case class Query(design: String, view: String, startKey: Option[_]=None, endKey: Option[_]=None)
-case class Query(compiledQuery: String, keys:Option[String])
+case class Query(compiledQuery: String, keys:Option[String], returnKey:Option[Boolean] = None)
 
 object Query {
   private val designPath = "_design/"
 
-  def apply(viewQuery: ViewQuery):Query = { //compile the serializable query from view query
+  def apply(viewQuery: ViewQuery, returnKey: Option[Boolean]):Query = { //compile the serializable query from view query
     val designDocId = viewQuery.getDesignDocId
     if (!designDocId.startsWith(designPath)) viewQuery.designDocId(designPath+designDocId) //So that we don't have to append "_design/" for every query
-    Query(viewQuery.buildQuery, jsonKeysOption(viewQuery))
+    if (returnKey.getOrElse(false))
+      Query(viewQuery.buildQuery, jsonKeysOption(viewQuery), Some(true))
+    else
+      Query(viewQuery.buildQuery, jsonKeysOption(viewQuery))
   }
 
   def jsonKeysOption(viewQuery: ViewQuery) = if(viewQuery.hasMultipleKeys) Some(viewQuery.getKeysAsJson) else None
